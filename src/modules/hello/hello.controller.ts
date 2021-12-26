@@ -8,17 +8,25 @@ import {
   Query,
   Body,
   Headers,
+  UsePipes,
+  UseGuards,
 } from '@nestjs/common';
 import { ApiQuery, ApiBody, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { HelloService } from './hello.service';
 import { Hello } from './classes/hello';
+import { CreateCatDto } from './dto/create-hello.dto';
+import { ValidationPipe } from '../../common/pipes/validate.pipe';
+import { Roles } from '../../common/decorator/roles.decorator';
+import { RolesGuard } from '../../common/guards/roles.guard';
 
 @Controller('hello')
+@UseGuards(RolesGuard)
 export class HelloController {
   constructor(private readonly helloService: HelloService) {}
 
   // 查询
   @Get()
+  @Roles('admin')
   @ApiQuery({ name: 'id', required: false })
   @ApiResponse({
     status: 200,
@@ -31,10 +39,11 @@ export class HelloController {
 
   // 增加
   @Post()
-  @ApiParam({ name: 'id' })
+  // @UsePipes(new JoiValidationPipe(createSchema))
+  @UsePipes(new ValidationPipe())
   @ApiBody({ description: '请输入message' })
-  save(@Body() { message }, @Headers('token') token): string {
-    return this.helloService.save(message);
+  save(@Body() createDto: CreateCatDto): string {
+    return this.helloService.save(createDto);
   }
 
   // 更新
